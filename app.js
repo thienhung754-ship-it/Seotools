@@ -144,23 +144,30 @@ async function processFile(file) {
 }
 
 async function extractPDF(file) {
+  console.log("Starting PDF extraction for:", file.name);
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
+    reader.onerror = () => reject(new Error("File reading error"));
     reader.onload = async (e) => {
       try {
         const typedarray = new Uint8Array(e.target.result);
-        const loadingTask = pdfjsLib.getDocument(typedarray);
+        // Using the library global assigned in index.html
+        const loadingTask = pdfjsLib.getDocument({ data: typedarray });
         const pdf = await loadingTask.promise;
         let text = '';
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const content = await page.getTextContent();
-          const strings = content.items.map(item => item.str);
-          text += strings.join(' ') + '\n';
+          text += content.items.map(item => item.str).join(' ') + '\n';
         }
-        if (!text || text.trim().length < 10) reject(new Error('Empty PDF Content'));
-        resolve(text.trim());
+        if (!text || text.trim().length < 5) {
+            reject(new Error('Nội dung PDF trống hoặc không thể đọc được văn bản.'));
+        } else {
+            console.log("Extraction success, length:", text.length);
+            resolve(text.trim());
+        }
       } catch(err) {
+        console.error("PDF.js Error:", err);
         reject(err);
       }
     };
