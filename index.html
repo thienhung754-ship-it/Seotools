@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinSEO Pro - Tối ưu Nội dung Tài chính</title>
+  <meta name="description" content="Công cụ tạo và tối ưu bài viết chuẩn SEO cho mảng tài chính." />
+  <link rel="stylesheet" href="style.css" />
+  <!-- CDN for File Extraction -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo" style="display: flex; flex-direction: column; line-height: 1.1; min-width: 0;">
+        <div style="display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;">
+          <span style="font-family: Arial, Helvetica, sans-serif; color: #e62020; font-weight: 900; font-size: clamp(16px, 4.5vw, 26px); text-transform: uppercase; letter-spacing: -1px; white-space: nowrap;">Kinh tế - Tài chính</span>
+          <span style="font-family: 'Brush Script MT', 'Dancing Script', cursive; color: #1a3687; font-size: clamp(14px, 4vw, 22px);">Online</span>
+        </div>
+        <div style="font-family: 'Times New Roman', Times, serif; color: #e62020; font-weight: 700; font-size: clamp(9px, 2.5vw, 11px); letter-spacing: 0.5px; text-transform: uppercase; padding-left: 2px;">
+          Tạp chí của Bộ Tài chính
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="api-status" id="apiStatus">
+          <span class="status-dot"></span>
+          <span class="status-label">AI Ready</span>
+        </div>
+        <button class="btn-settings" id="btnHistory" title="Lịch sử các bài đã tạo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3v5h5"></path>
+            <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"></path>
+            <path d="M12 7v5l4 2"></path>
+          </svg>
+        </button>
+        </button>
+      </div>
+    </div>
+  </header>
+
+
+
+  <!-- Modal History -->
+  <div class="modal-overlay" id="modalHistory">
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3>Lịch sử bài viết</h3>
+        <button class="modal-close" id="closeHistory">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="historyList" class="history-list">
+          <div style="text-align:center;color:var(--text-muted);padding:40px;">Chưa có bài viết nào được lưu.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="main">
+    <!-- Hero -->
+    <section class="hero">
+      <h1 class="hero-title" style="color: var(--primary);">Hệ thống SEO Báo chí</h1>
+      <p class="hero-sub" style="max-width: 600px; margin: 0 auto; line-height: 1.6;">
+        Tối ưu hoá nội dung chuyên nghiệp<br>theo chuẩn <strong>Tạp chí Kinh tế - Tài chính</strong>.
+      </p>
+    </section>
+
+    <!-- Workspace -->
+    <div class="workspace">
+      <!-- Input Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Soạn thảo</div>
+          <div class="panel-actions">
+            <button class="chip-btn active" id="tabUpload" onclick="switchTab('upload')">Tải file</button>
+            <button class="chip-btn" id="tabPaste" onclick="switchTab('paste')">Nhập văn bản</button>
+          </div>
+        </div>
+
+        <!-- Upload Tab -->
+        <div id="uploadArea" class="upload-area" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" onclick="document.getElementById('fileInput').click()">
+          <input type="file" id="fileInput" accept=".txt,.docx,.pdf,.html,.md" style="display:none" onchange="handleFileSelect(event)" />
+          <div class="upload-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          </div>
+          <p class="upload-title">Kéo thả hoặc click để tải lên</p>
+          <p class="upload-sub">Hỗ trợ: .PDF, .DOCX, .TXT, .MD, .HTML</p>
+          <div id="fileInfo" class="file-info" style="display:none">
+            <div class="file-chip">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+              <span id="fileName"></span>
+              <button onclick="clearFile(event)" class="remove-file">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Paste Tab -->
+        <div id="pasteArea" style="display:none">
+          <textarea id="pasteInput" class="paste-input" placeholder="Nhập nội dung thô (thông báo, bài báo)...&#10;&#10;Nội dung sẽ được tối ưu hoá theo chuẩn SEO của báo chí."></textarea>
+        </div>
+
+        <!-- Configuration -->
+        <div class="config-section">
+          <div class="config-row">
+            <div class="config-item">
+              <label class="config-label">Từ khoá SEO</label>
+              <input type="text" id="keyword" class="config-input" placeholder="Tự động trích xuất nếu để trống" />
+            </div>
+            <div class="config-item">
+              <label class="config-label">Văn phong</label>
+              <select id="tone" class="config-input">
+                <option value="professional">Phân tích chuyên sâu</option>
+                <option value="news">Tin tức nóng hổi</option>
+                <option value="editorial">Bình luận chuyên gia</option>
+                <option value="report">Báo cáo số liệu</option>
+              </select>
+            </div>
+          </div>
+          <div class="config-row">
+            <div class="config-item">
+              <label class="config-label">Độ dài</label>
+              <select id="length" class="config-input">
+                <option value="medium">Tiêu chuẩn (800-1200 từ)</option>
+                <option value="short">Tin vắn (400-600 từ)</option>
+                <option value="long">Chuyên sâu (1500-2000 từ)</option>
+              </select>
+            </div>
+            <div class="config-item">
+              <label class="config-label">Số lượng</label>
+              <select id="numArticles" class="config-input">
+                <option value="1">1 phiên bản</option>
+                <option value="2">2 phiên bản</option>
+                <option value="3">3 phiên bản</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Button Generate -->
+        <button class="btn-generate" id="btnGenerate" onclick="generateSEO()">
+          <span class="btn-text">Bắt đầu phân tích</span>
+          <span class="btn-loader" style="display:none">
+            <svg class="spinner" viewBox="0 0 50 50" width="20" height="20">
+              <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"></circle>
+            </svg>
+            Đang phân tích...
+          </span>
+        </button>
+
+        <!-- Chấm điểm đưa sang trái -->
+        <div id="scoreAreaLeft" style="display:none; border-top: 1px solid var(--border); padding-top: 24px;">
+           <div style="margin: 0 24px 12px; font-size: 13px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; display: flex; align-items: center; justify-content: space-between;">
+             <div style="display:flex; align-items:center; gap:6px;">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20V10M18 20V4"></path></svg>
+               ĐIỂM ĐÁNH GIÁ BÀI VIẾT MỚI (AI)
+             </div>
+             <button id="btnRescore" onclick="reScoreSelected()" style="cursor:pointer; background:rgba(230, 32, 32, 0.1); border:none; color:var(--primary); font-size:12px; font-weight:600; padding:6px 10px; border-radius:6px; display:flex; align-items:center; gap:4px; transition:0.2s;">
+               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+               Chấm lại
+             </button>
+           </div>
+           <div id="scoreOverview" style="margin: 0 24px 24px; padding: 20px; background: #fafafa; border: 1px solid var(--border); border-radius: 12px;"></div>
+        </div>
+      </div>
+
+      <!-- Panel Right: Results -->
+      <div class="panel panel-right">
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="3" y1="9" x2="21" y2="9"></line>
+              <line x1="9" y1="21" x2="9" y2="9"></line>
+            </svg>
+          </div>
+          <p class="empty-title">Chưa có kết quả</p>
+          <p class="empty-sub">Nội dung đã tối ưu sẽ xuất hiện tại đây.</p>
+        </div>
+
+        <!-- Results Content -->
+        <div id="resultsArea" style="display:none; height: 100%; display: flex; flex-direction: column;">
+          <div id="articlesTabs" class="articles-tabs"></div>
+          <div id="articlesContent" style="flex:1; overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
