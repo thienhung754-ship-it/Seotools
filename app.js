@@ -37,13 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
 function updateApiStatus() {
   const el = document.getElementById('apiStatus');
   const label = el.querySelector('.status-label');
-  if (state.apiKey) {
-    el.classList.add('connected');
-    label.textContent = 'Đã kết nối AI';
-  } else {
-    el.classList.remove('connected');
-    label.textContent = 'Chưa kết nối';
-  }
+  
+  // Vì đã dùng Vercel Proxy bảo mật, trạng thái luôn mặc định là Sẵn sàng
+  el.classList.add('connected');
+  label.textContent = 'Đã kết nối AI (Proxy Mode)';
 }
 
 // ─── Modal ────────────────────────────────────
