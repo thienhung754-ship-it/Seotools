@@ -202,10 +202,7 @@ async function generateSEO() {
     return;
   }
 
-  if (!state.apiKey) {
-    showToast('🔑 Vui lòng liên hệ Admin để cấu hình khóa API!', 'error');
-    return;
-  }
+  // Key đã được quản lý bởi Vercel Serverless Function, không cần check ở Client.
 
   const keyword   = document.getElementById('keyword').value.trim();
   const tone      = document.getElementById('tone').value;
