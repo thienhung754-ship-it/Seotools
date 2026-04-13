@@ -17,8 +17,13 @@ let state = {
 
 // ─── Init ─────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  console.log("FinSEO Pro initialized!");
   updateApiStatus();
   initModal();
+
+  // Kiểm tra thư viện
+  if (typeof pdfjsLib === 'undefined') console.error("PDF.js not loaded!");
+  if (typeof mammoth === 'undefined') console.error("Mammoth.js not loaded!");
 
   // Load saved api key
   if (state.apiKey) {
@@ -109,38 +114,45 @@ function clearFile(e) {
 }
 
 async function processFile(file) {
-  const allowed = ['.txt', '.docx', '.pdf', '.html', '.md'];
-  const ext = '.' + file.name.split('.').pop().toLowerCase();
-  if (!allowed.includes(ext)) {
-    showToast('Hỗ trợ .txt, .docx, .pdf, .html, .md', 'error');
-    return;
-  }
-  state.fileName = file.name;
-  document.getElementById('fileName').textContent = file.name;
-  document.getElementById('fileInfo').style.display = 'block';
+  try {
+    const allowed = ['.txt', '.docx', '.pdf', '.html', '.md'];
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+    
+    console.log("Processing file:", file.name, "Ext:", ext);
+    
+    if (!allowed.includes(ext)) {
+      showToast('Hỗ trợ .txt, .docx, .pdf, .html, .md', 'error');
+      return;
+    }
 
-  if (ext === '.txt' || ext === '.md' || ext === '.html') {
-    state.fileContent = await file.text();
-  } else if (ext === '.pdf') {
-    showToast('⏳ Đang đọc nội dung PDF...', 'info');
-    try {
-      state.fileContent = await extractPDF(file);
-    } catch (e) {
-      showToast('❌ PDF lỗi hoặc dạng ảnh Scan, vui lòng Copy dán chữ trực tiếp!', 'error');
-      clearFile({ stopPropagation:()=>{} });
-      return;
+    state.fileName = file.name;
+    const fileNameEl = document.getElementById('fileName');
+    const fileInfoEl = document.getElementById('fileInfo');
+    
+    if(fileNameEl) fileNameEl.textContent = file.name;
+    if(fileInfoEl) fileInfoEl.style.display = 'block';
+
+    let content = '';
+    if (ext === '.txt' || ext === '.md' || ext === '.html') {
+      content = await file.text();
+    } else if (ext === '.pdf') {
+      showToast('⏳ Đang đọc nội dung PDF...', 'info');
+      content = await extractPDF(file);
+    } else if (ext === '.docx') {
+      showToast('⏳ Đang đọc nội dung Word...', 'info');
+      content = await extractDOCX(file);
     }
-  } else {
-    showToast('⏳ Đang đọc nội dung Word...', 'info');
-    try {
-      state.fileContent = await extractDOCX(file);
-    } catch (e) {
-      showToast('❌ File Word này bị lỗi, vui lòng Copy dán chữ trực tiếp!', 'error');
-      clearFile({ stopPropagation:()=>{} });
-      return;
+    
+    if (content) {
+      state.fileContent = content;
+      showToast(`✅ Đã nạp: ${file.name} (${content.length} ký tự)`, 'success');
+      console.log("File loaded successfully.");
     }
+  } catch (err) {
+    console.error("File Processing Error:", err);
+    showToast('❌ Lỗi nạp file: ' + err.message, 'error');
+    clearFile({ stopPropagation:()=>{} });
   }
-  showToast(`✅ Đã nạp thành công: ${file.name}`, 'success');
 }
 
 async function extractPDF(file) {
