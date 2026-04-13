@@ -346,6 +346,7 @@ TRẢ VỀ JSON THUẦN KHÔNG CÓ MARKDOWN, THEO ĐÚNG CẤU TRÚC SAU:
   let attempt = 0;
   const maxRetries = 3;
 
+  while (attempt < maxRetries) {
     try {
       res = await fetch('/api/generate', {
         method: 'POST',
