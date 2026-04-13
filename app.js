@@ -4,8 +4,8 @@
 
 // ─── State ───────────────────────────────────
 let state = {
-  apiKey: localStorage.getItem('finseo_api_key') || 'AIzaSyCukL42tkmGs_cSiu-1AJTODSI9ps8zZ_g',
-  apiUrl: localStorage.getItem('finseo_api_url') || 'https://api.openai.com/v1',
+  apiKey: '', // Sẽ được quản lý qua Vercel Environment Variables
+  apiUrl: '/api/generate',
   fileContent: '',
   fileName: '',
   currentTab: 'upload',
@@ -330,66 +330,29 @@ TRẢ VỀ JSON THUẦN KHÔNG CÓ MARKDOWN, THEO ĐÚNG CẤU TRÚC SAU:
   let attempt = 0;
   const maxRetries = 3;
 
-  while (attempt < maxRetries) {
     try {
-      if (isGeminiNative) {
-        res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${state.apiKey.trim()}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: systemPrompt + "\\n\\n" + prompt }] }],
-              generationConfig: { temperature: 0.7, responseMimeType: "application/json" }
-            })
-          }
-        );
-      } else {
-        res = await fetch(
-          `${state.apiUrl.replace(/\/+$/, '')}/chat/completions`,
-          {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${state.apiKey.trim()}`
-            },
-            body: JSON.stringify({
-              model: 'gpt-4o',
-              messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: prompt }
-              ],
-              temperature: 0.7,
-              response_format: { type: "json_object" }
-            })
-          }
-        );
-      }
+      res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          prompt: systemPrompt + "\n\n" + prompt 
+        })
+      });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        const errMsg = err?.error?.message || err?.message || `HTTP ${res.status}`;
-        throw new Error(errMsg);
+        throw new Error(err.error || `HTTP ${res.status}`);
       }
-
-      break; // Success, break out of retry loop
+      break;
     } catch (e) {
-      if (e.message.includes('high demand') || e.message.includes('503')) {
-        attempt++;
-        if (attempt >= maxRetries) throw new Error('Máy chủ Google Gemini đang quá tải. Hãy thử lại sau vài phút (High Demand).');
-        await new Promise(r => setTimeout(r, 2000 * attempt)); // Exponential backoff: 2s, 4s...
-      } else {
-        throw e; // Unrelated error, throw immediately
-      }
+      attempt++;
+      if (attempt >= maxRetries) throw e;
+      await new Promise(r => setTimeout(r, 1000 * attempt));
     }
   }
 
   const data = await res.json();
-  if (isGeminiNative) {
-    raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  } else {
-    raw = data.choices?.[0]?.message?.content || '';
-  }
+  raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
   let parsed;
   try {
@@ -813,27 +776,21 @@ TRẢ VỀ JSON THUẦN KHÔNG CÓ MARKDOWN THAM KHẢO CẤU TRÚC (Tuyệt đ�
     
     // Auto Retry Logic
     for(let attempt = 1; attempt <= 3; attempt++){
-      if (isGeminiNative) {
-        res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=' + state.apiKey.trim(), {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.1, responseMimeType: "application/json" }
-          })
-        });
-      } else {
-        res = await fetch(state.apiUrl.replace(/[/]+$/, '') + '/chat/completions', {
-          method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + state.apiKey.trim() },
-          body: JSON.stringify({ model: 'gpt-4o', messages: [{role:'user', content: prompt}], response_format: {type:'json_object'} })
-        });
-      }
+      res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt })
+      });
       if(res.ok) break;
-      if(attempt === 3) throw new Error('API Error: ' + res.status);
+      if(attempt === 3) {
+        const err = await res.json();
+        throw new Error(err.error || res.status);
+      }
       await new Promise(r => setTimeout(r, 1000 * attempt));
     }
 
     const data = await res.json();
-    let raw = isGeminiNative ? data.candidates?.[0]?.content?.parts?.[0]?.text : data.choices?.[0]?.message?.content;
+    let raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
     const newScore = JSON.parse(raw.replace(/```json/gi, '').replace(/```/g, '').trim());
     
     art.seo_score = newScore;
